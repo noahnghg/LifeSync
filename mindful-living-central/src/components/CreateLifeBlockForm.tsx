@@ -82,25 +82,41 @@ const CreateLifeBlockForm = ({ onSuccess }: CreateLifeBlockFormProps) => {
   });
 
   const onSubmit = (data: LifeBlockFormData) => {
+    const generateId = () => {
+      if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+        return crypto.randomUUID();
+      }
+      return Date.now().toString(36) + Math.random().toString(36).substr(2);
+    };
+
     const processedData = {
       name: data.name,
       description: data.description,
       icon: data.icon,
       color: data.color,
       contentTypes: data.contentTypes.map(ct => ({
-        ...ct,
-        id: crypto.randomUUID(),
+        id: generateId(),
+        name: ct.name,
+        icon: ct.icon,
         fields: ct.fields.map(field => ({
-          ...field,
-          id: crypto.randomUUID(),
+          id: generateId(),
+          name: field.name,
+          type: field.type,
+          required: field.required,
+          options: field.options || [],
         })),
       })),
     };
 
-    createLifeBlock(processedData);
-    setIsOpen(false);
-    form.reset();
-    onSuccess?.();
+    createLifeBlock(processedData)
+      .then(() => {
+        setIsOpen(false);
+        form.reset();
+        onSuccess?.();
+      })
+      .catch((error) => {
+        console.error('Failed to create life block:', error);
+      });
   };
 
   return (

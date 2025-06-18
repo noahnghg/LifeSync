@@ -1,18 +1,20 @@
 
 import { useState, useEffect } from 'react';
 import { CustomLifeBlock, ContentType, LifeBlockContent } from '@/types/lifeblocks';
-
-const STORAGE_KEY = 'custom-lifeblocks';
+import * as api from '@/lib/api';
 
 export const useLifeBlocks = () => {
   const [lifeBlocks, setLifeBlocks] = useState<CustomLifeBlock[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
+  // Load life blocks from API
   useEffect(() => {
-    const stored = localStorage.getItem(STORAGE_KEY);
-    if (stored) {
+    const loadLifeBlocks = async () => {
       try {
-        const parsed = JSON.parse(stored);
-        setLifeBlocks(parsed.map((block: any) => ({
+        setLoading(true);
+        const blocks = await api.getLifeBlocks();
+        setLifeBlocks(blocks.map((block: any) => ({
           ...block,
           createdAt: new Date(block.createdAt),
           updatedAt: new Date(block.updatedAt),
@@ -22,102 +24,148 @@ export const useLifeBlocks = () => {
             updatedAt: new Date(content.updatedAt),
           }))
         })));
-      } catch (error) {
-        console.error('Error parsing stored LifeBlocks:', error);
+        setError(null);
+      } catch (err) {
+        console.error('Error loading life blocks:', err);
+        setError('Failed to load life blocks');
+      } finally {
+        setLoading(false);
       }
-    }
+    };
+
+    loadLifeBlocks();
   }, []);
 
-  const saveToStorage = (blocks: CustomLifeBlock[]) => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(blocks));
+  const createLifeBlock = async (lifeBlock: Omit<CustomLifeBlock, 'id' | 'createdAt' | 'updatedAt' | 'contents'>) => {
+    try {
+      const newBlock = await api.createLifeBlock(lifeBlock);
+      const processedBlock = {
+        ...newBlock,
+        createdAt: new Date(newBlock.createdAt),
+        updatedAt: new Date(newBlock.updatedAt),
+        contents: newBlock.contents.map((content: any) => ({
+          ...content,
+          createdAt: new Date(content.createdAt),
+          updatedAt: new Date(content.updatedAt),
+        }))
+      };
+      setLifeBlocks(prev => [...prev, processedBlock]);
+      return processedBlock;
+    } catch (err) {
+      console.error('Error creating life block:', err);
+      setError('Failed to create life block');
+      throw err;
+    }
   };
 
-  const createLifeBlock = (lifeBlock: Omit<CustomLifeBlock, 'id' | 'createdAt' | 'updatedAt' | 'contents'>) => {
-    const newLifeBlock: CustomLifeBlock = {
-      ...lifeBlock,
-      id: crypto.randomUUID(),
-      contents: [],
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    };
-    const updated = [...lifeBlocks, newLifeBlock];
-    setLifeBlocks(updated);
-    saveToStorage(updated);
-    return newLifeBlock;
+  const updateLifeBlock = async (id: string, updates: Partial<CustomLifeBlock>) => {
+    try {
+      const updatedBlock = await api.updateLifeBlock(id, updates);
+      const processedBlock = {
+        ...updatedBlock,
+        createdAt: new Date(updatedBlock.createdAt),
+        updatedAt: new Date(updatedBlock.updatedAt),
+        contents: updatedBlock.contents.map((content: any) => ({
+          ...content,
+          createdAt: new Date(content.createdAt),
+          updatedAt: new Date(content.updatedAt),
+        }))
+      };
+      setLifeBlocks(prev => prev.map(block => 
+        block.id === id ? processedBlock : block
+      ));
+    } catch (err) {
+      console.error('Error updating life block:', err);
+      setError('Failed to update life block');
+      throw err;
+    }
   };
 
-  const updateLifeBlock = (id: string, updates: Partial<CustomLifeBlock>) => {
-    const updated = lifeBlocks.map(block =>
-      block.id === id
-        ? { ...block, ...updates, updatedAt: new Date() }
-        : block
-    );
-    setLifeBlocks(updated);
-    saveToStorage(updated);
+  const deleteLifeBlock = async (id: string) => {
+    try {
+      await api.deleteLifeBlock(id);
+      setLifeBlocks(prev => prev.filter(block => block.id !== id));
+    } catch (err) {
+      console.error('Error deleting life block:', err);
+      setError('Failed to delete life block');
+      throw err;
+    }
   };
 
-  const deleteLifeBlock = (id: string) => {
-    const updated = lifeBlocks.filter(block => block.id !== id);
-    setLifeBlocks(updated);
-    saveToStorage(updated);
+  const addContent = async (lifeBlockId: string, content: Omit<LifeBlockContent, 'id' | 'createdAt' | 'updatedAt'>) => {
+    try {
+      const updatedBlock = await api.addContentToLifeBlock(lifeBlockId, content);
+      const processedBlock = {
+        ...updatedBlock,
+        createdAt: new Date(updatedBlock.createdAt),
+        updatedAt: new Date(updatedBlock.updatedAt),
+        contents: updatedBlock.contents.map((content: any) => ({
+          ...content,
+          createdAt: new Date(content.createdAt),
+          updatedAt: new Date(content.updatedAt),
+        }))
+      };
+      setLifeBlocks(prev => prev.map(block => 
+        block.id === lifeBlockId ? processedBlock : block
+      ));
+      return processedBlock.contents[processedBlock.contents.length - 1];
+    } catch (err) {
+      console.error('Error adding content:', err);
+      setError('Failed to add content');
+      throw err;
+    }
   };
 
-  const addContent = (lifeBlockId: string, content: Omit<LifeBlockContent, 'id' | 'createdAt' | 'updatedAt'>) => {
-    const newContent: LifeBlockContent = {
-      ...content,
-      id: crypto.randomUUID(),
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    };
-
-    const updated = lifeBlocks.map(block =>
-      block.id === lifeBlockId
-        ? {
-            ...block,
-            contents: [...block.contents, newContent],
-            updatedAt: new Date(),
-          }
-        : block
-    );
-    setLifeBlocks(updated);
-    saveToStorage(updated);
-    return newContent;
+  const updateContent = async (lifeBlockId: string, contentId: string, updates: Partial<LifeBlockContent>) => {
+    try {
+      const updatedBlock = await api.updateContentInLifeBlock(lifeBlockId, contentId, { data: updates.data });
+      const processedBlock = {
+        ...updatedBlock,
+        createdAt: new Date(updatedBlock.createdAt),
+        updatedAt: new Date(updatedBlock.updatedAt),
+        contents: updatedBlock.contents.map((content: any) => ({
+          ...content,
+          createdAt: new Date(content.createdAt),
+          updatedAt: new Date(content.updatedAt),
+        }))
+      };
+      setLifeBlocks(prev => prev.map(block => 
+        block.id === lifeBlockId ? processedBlock : block
+      ));
+    } catch (err) {
+      console.error('Error updating content:', err);
+      setError('Failed to update content');
+      throw err;
+    }
   };
 
-  const updateContent = (lifeBlockId: string, contentId: string, updates: Partial<LifeBlockContent>) => {
-    const updated = lifeBlocks.map(block =>
-      block.id === lifeBlockId
-        ? {
-            ...block,
-            contents: block.contents.map(content =>
-              content.id === contentId
-                ? { ...content, ...updates, updatedAt: new Date() }
-                : content
-            ),
-            updatedAt: new Date(),
-          }
-        : block
-    );
-    setLifeBlocks(updated);
-    saveToStorage(updated);
-  };
-
-  const deleteContent = (lifeBlockId: string, contentId: string) => {
-    const updated = lifeBlocks.map(block =>
-      block.id === lifeBlockId
-        ? {
-            ...block,
-            contents: block.contents.filter(content => content.id !== contentId),
-            updatedAt: new Date(),
-          }
-        : block
-    );
-    setLifeBlocks(updated);
-    saveToStorage(updated);
+  const deleteContent = async (lifeBlockId: string, contentId: string) => {
+    try {
+      const updatedBlock = await api.deleteContentFromLifeBlock(lifeBlockId, contentId);
+      const processedBlock = {
+        ...updatedBlock,
+        createdAt: new Date(updatedBlock.createdAt),
+        updatedAt: new Date(updatedBlock.updatedAt),
+        contents: updatedBlock.contents.map((content: any) => ({
+          ...content,
+          createdAt: new Date(content.createdAt),
+          updatedAt: new Date(content.updatedAt),
+        }))
+      };
+      setLifeBlocks(prev => prev.map(block => 
+        block.id === lifeBlockId ? processedBlock : block
+      ));
+    } catch (err) {
+      console.error('Error deleting content:', err);
+      setError('Failed to delete content');
+      throw err;
+    }
   };
 
   return {
     lifeBlocks,
+    loading,
+    error,
     createLifeBlock,
     updateLifeBlock,
     deleteLifeBlock,
