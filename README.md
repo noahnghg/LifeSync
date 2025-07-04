@@ -1,6 +1,5 @@
-# Mindful Living - Life Management Platform
-
-A modern, customizable life management platform built with React, Flask, and MongoDB. Create custom "LifeBlocks" to organize and track different aspects of your life - from reading lists to fitness goals to recipe collections.
+# LifeSync - You are what you measure!
+Motivated by the idea of tracking to progress, I want to build a UI-friendly, easy-to-use and "smart" platform for tracking anything in my life. This is a modern, customizable life management platform built with React, Flask, and MongoDB. Create custom "LifeBlocks" to organize and track different aspects of your life - from reading lists to fitness goals to recipe collections.
 
 ## 🚀 Features
 
@@ -92,52 +91,7 @@ The frontend will run on `http://localhost:8080`
 - **🏃‍♂️ Fitness Goals**: Log workouts with exercise, duration, intensity
 - **🍳 Recipe Collection**: Store recipes with ingredients, instructions, difficulty
 
-## 🔧 API Endpoints
 
-### Life Blocks
-- `GET /life_blocks` - Get all life blocks
-- `POST /life_blocks` - Create a new life block
-- `PUT /life_blocks/<id>` - Update a life block
-- `DELETE /life_blocks/<id>` - Delete a life block
-
-### Content Management
-- `POST /life_blocks/<id>/contents` - Add content to a life block
-- `PUT /life_blocks/<id>/contents/<content_id>` - Update content
-- `DELETE /life_blocks/<id>/contents/<content_id>` - Delete content
-
-## 🗃️ Database Schema
-
-### LifeBlock Collection
-```javascript
-{
-  _id: ObjectId,
-  name: String,
-  description: String,
-  icon: String,
-  color: String,
-  contentTypes: [{
-    id: String,
-    name: String,
-    icon: String,
-    fields: [{
-      id: String,
-      name: String,
-      type: String, // 'text', 'number', 'date', 'boolean', 'select', 'textarea'
-      required: Boolean,
-      options: [String] // for select fields
-    }]
-  }],
-  contents: [{
-    id: String,
-    contentTypeId: String,
-    data: Object, // dynamic based on content type fields
-    createdAt: Date,
-    updatedAt: Date
-  }],
-  createdAt: Date,
-  updatedAt: Date
-}
-```
 
 ## 🚀 Development
 
@@ -146,26 +100,3 @@ The frontend will run on `http://localhost:8080`
 2. Start Backend: `cd mindful-living-backend && python3 app.py`
 3. Start Frontend: `cd mindful-living-central && npm run dev`
 
-### Building for Production
-```bash
-cd mindful-living-central
-npm run build
-```
-
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create a feature branch: `git checkout -b feature-name`
-3. Commit your changes: `git commit -m 'Add some feature'`
-4. Push to the branch: `git push origin feature-name`
-5. Submit a pull request
-
-## 📝 License
-
-This project is licensed under the MIT License - see the LICENSE file for details.
-
-## 🙏 Acknowledgments
-
-- Built with [Shadcn/ui](https://ui.shadcn.com/) components
-- Icons from [Lucide](https://lucide.dev/)
-- Styled with [TailwindCSS](https://tailwindcss.com/)
