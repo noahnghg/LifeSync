@@ -1,4 +1,8 @@
-# Mindful Living - Life Management Platform
+# LifeSync: A Mindful Living & Life Management Platform
+
+![LifeSync Homepage](./screenshots/homepage.png)
+
+*The clean and modern homepage featuring the landing page with navigation to signup and login*
 
 A modern, customizable life management platform built with React, Flask, and MongoDB. Create custom "LifeBlocks" to organize and track different aspects of your life - from reading lists to fitness goals to recipe collections.
 
@@ -13,14 +17,11 @@ A modern, customizable life management platform built with React, Flask, and Mon
 - **Real-time Dashboard**: Overview of all your productivity metrics
 - **Responsive Design**: Works seamlessly on desktop and mobile devices
 
-## � Screenshots
+## 📸 Screenshots
 
-### Homepage
-![LifeSync Homepage](screenshots/Screenshot%202025-09-09%20at%2012.28.16%20AM.png)
+The main dashboard provides an at-a-glance overview of your tasks, schedule, finances, and goals.
 
-*The clean and modern homepage featuring the landing page with navigation to signup and login*
-
-## �🛠️ Tech Stack
+## 🛠️ Tech Stack
 
 ### Frontend
 - **React 18** with TypeScript
