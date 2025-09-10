@@ -13,7 +13,14 @@ A modern, customizable life management platform built with React, Flask, and Mon
 - **Real-time Dashboard**: Overview of all your productivity metrics
 - **Responsive Design**: Works seamlessly on desktop and mobile devices
 
-## 🛠️ Tech Stack
+## � Screenshots
+
+### Homepage
+![LifeSync Homepage](screenshots/Screenshot%202025-09-09%20at%2012.28.16%20AM.png)
+
+*The clean and modern homepage featuring the landing page with navigation to signup and login*
+
+## �🛠️ Tech Stack
 
 ### Frontend
 - **React 18** with TypeScript
