@@ -19,7 +19,15 @@ A modern, customizable life management platform built with React, Flask, and Mon
 
 ## 📸 Screenshots
 
-The main dashboard provides an at-a-glance overview of your tasks, schedule, finances, and goals.
+Here's a glimpse of LifeSync in action:
+
+### Main Dashboard
+![LifeSync Dashboard](./screenshots/dashboard.png)
+*The main dashboard provides an at-a-glance overview of your tasks, schedule, finances, and goals, with quick actions to add new items.*
+
+### Sign-in Page
+![LifeSync Sign-in](./screenshots/signin.png)
+*Secure sign-in page for new and returning users.*
 
 ## 🛠️ Tech Stack
 
