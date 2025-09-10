@@ -1,6 +1,6 @@
-# LifeSync - Life Management Platform
+# Mindful Living - Life Management Platform
 
-A modern, full-stack productivity and life management platform built with React, TypeScript, Flask (Python), and MongoDB. Create custom "LifeBlocks" to organize different aspects of your life, manage tasks, schedule events, track finances, and set goals.
+A modern, customizable life management platform built with React, Flask, and MongoDB. Create custom "LifeBlocks" to organize and track different aspects of your life - from reading lists to fitness goals to recipe collections.
 
 ## 🚀 Features
 
@@ -177,36 +177,6 @@ The frontend will run on `http://localhost:8080`
 
 ## 🔧 API Endpoints
 
-### Authentication
-- `POST /auth/signup` - Create a new user account
-- `POST /auth/login` - Login user
-- `GET /auth/me` - Get current user info
-- `POST /auth/logout` - Logout user
-
-### Tasks
-- `GET /tasks` - Get user tasks
-- `POST /tasks` - Create a new task
-- `PUT /tasks/<id>` - Update a task
-- `DELETE /tasks/<id>` - Delete a task
-
-### Schedule
-- `GET /schedules` - Get user schedule events
-- `POST /schedules` - Create a new event
-- `PUT /schedules/<id>` - Update an event
-- `DELETE /schedules/<id>` - Delete an event
-
-### Finance
-- `GET /finances` - Get user financial data
-- `POST /finances` - Create financial summary
-- `GET /transactions` - Get user transactions
-- `POST /transactions` - Create a new transaction
-
-### Goals
-- `GET /goals` - Get user goals
-- `POST /goals` - Create a new goal
-- `PUT /goals/<id>` - Update a goal
-- `DELETE /goals/<id>` - Delete a goal
-
 ### Life Blocks
 - `GET /life_blocks` - Get all life blocks
 - `POST /life_blocks` - Create a new life block
@@ -273,27 +243,8 @@ docker-compose -f docker-compose.dev.yml down
 
 ### Building for Production
 ```bash
-# Build and start production environment
-docker-compose up --build -d
-
-# Or build frontend manually
 cd mindful-living-central
 npm run build
-```
-
-### Database Management
-```bash
-# Initialize database with sample data
-docker-compose exec backend python3 init_user_db.py
-
-# Access MongoDB shell
-docker-compose exec mongodb mongosh -u admin -p password123 --authenticationDatabase admin
-
-# Backup database
-docker-compose exec mongodb mongodump --username admin --password password123 --authenticationDatabase admin --db lifesync --out /backup
-
-# Restore database
-docker-compose exec mongodb mongorestore --username admin --password password123 --authenticationDatabase admin --db lifesync /backup/lifesync
 ```
 
 ## 🤝 Contributing
