@@ -1,81 +1,106 @@
-
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { BarChart3, TrendingUp, Target, Activity, Clock, CheckSquare } from 'lucide-react';
+import { getAnalytics } from '../lib/api';
+
+interface ProductivityMetric {
+  title: string;
+  value: string;
+  change: string;
+  trend: 'up' | 'down';
+  icon: React.ElementType;
+  color: string;
+}
+
+interface WeeklyData {
+  day: string;
+  tasks: number;
+  hours: number;
+  efficiency: number;
+}
+
+interface Category {
+  name: string;
+  percentage: number;
+  color: string;
+}
+
+interface Insight {
+  title: string;
+  description: string;
+  suggestion: string;
+  impact: string;
+}
 
 const AnalyticsModule = () => {
-  const productivityMetrics = [
-    {
-      title: 'Daily Average Tasks',
-      value: '8.5',
-      change: '+12%',
-      trend: 'up',
-      icon: CheckSquare,
-      color: 'green'
-    },
-    {
-      title: 'Focus Hours',
-      value: '6.2h',
-      change: '+8%',
-      trend: 'up',
-      icon: Clock,
-      color: 'blue'
-    },
-    {
-      title: 'Goal Completion',
-      value: '87%',
-      change: '+15%',
-      trend: 'up',
-      icon: Target,
-      color: 'purple'
-    },
-    {
-      title: 'Efficiency Score',
-      value: '92',
-      change: '+3%',
-      trend: 'up',
-      icon: Activity,
-      color: 'orange'
-    }
-  ];
+  const [productivityMetrics, setProductivityMetrics] = useState<ProductivityMetric[]>([]);
+  const [weeklyData, setWeeklyData] = useState<WeeklyData[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [insights, setInsights] = useState<Insight[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const weeklyData = [
-    { day: 'Mon', tasks: 12, hours: 7.5, efficiency: 85 },
-    { day: 'Tue', tasks: 8, hours: 6.2, efficiency: 92 },
-    { day: 'Wed', tasks: 15, hours: 8.1, efficiency: 88 },
-    { day: 'Thu', tasks: 6, hours: 5.8, efficiency: 95 },
-    { day: 'Fri', tasks: 10, hours: 7.0, efficiency: 90 },
-    { day: 'Sat', tasks: 4, hours: 3.2, efficiency: 78 },
-    { day: 'Sun', tasks: 3, hours: 2.5, efficiency: 82 }
-  ];
+  useEffect(() => {
+    const fetchAnalytics = async () => {
+      try {
+        const data = await getAnalytics();
+        if (data) {
+          // Map icon strings to actual icon components
+          const iconMap: { [key: string]: React.ElementType } = {
+            'CheckSquare': CheckSquare,
+            'Clock': Clock,
+            'TrendingUp': TrendingUp,
+            'Target': Target,
+            'Activity': Activity,
+            'BarChart3': BarChart3
+          };
 
-  const categories = [
-    { name: 'Work', percentage: 45, color: 'bg-blue-500' },
-    { name: 'Personal', percentage: 25, color: 'bg-green-500' },
-    { name: 'Health', percentage: 15, color: 'bg-purple-500' },
-    { name: 'Learning', percentage: 10, color: 'bg-orange-500' },
-    { name: 'Social', percentage: 5, color: 'bg-red-500' }
-  ];
+          const mappedMetrics = (data.productivityMetrics || []).map((metric: any) => ({
+            ...metric,
+            icon: iconMap[metric.icon] || Activity
+          }));
 
-  const insights = [
-    {
-      title: 'Peak Productivity Time',
-      description: 'You\'re most productive between 9-11 AM',
-      suggestion: 'Schedule important tasks during this window',
-      impact: 'High'
-    },
-    {
-      title: 'Task Completion Pattern',
-      description: 'You complete 23% more tasks on weekdays',
-      suggestion: 'Consider batch processing weekend tasks',
-      impact: 'Medium'
-    },
-    {
-      title: 'Focus Session Optimal Length',
-      description: 'Your focus sessions are most effective at 45 minutes',
-      suggestion: 'Adjust your Pomodoro timer accordingly',
-      impact: 'Medium'
-    }
-  ];
+          setProductivityMetrics(mappedMetrics);
+          setWeeklyData(data.weeklyData || []);
+          setCategories(data.categories || []);
+          setInsights(data.insights || []);
+        }
+      } catch (err) {
+        console.error('Analytics fetch error:', err);
+        setError('Failed to load analytics data');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchAnalytics();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="p-8 bg-gray-50 min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading analytics...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="p-8 bg-gray-50 min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-red-600 mb-4">{error}</p>
+          <button 
+            onClick={() => window.location.reload()} 
+            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+          >
+            Retry
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="p-8 bg-gray-50 min-h-screen">
@@ -86,33 +111,39 @@ const AnalyticsModule = () => {
 
       {/* Productivity Metrics */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        {productivityMetrics.map((metric, index) => {
-          const Icon = metric.icon;
-          return (
-            <div key={index} className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
-              <div className="flex items-center justify-between mb-4">
-                <div className={`p-3 rounded-lg ${
-                  metric.color === 'green' ? 'bg-green-100' :
-                  metric.color === 'blue' ? 'bg-blue-100' :
-                  metric.color === 'purple' ? 'bg-purple-100' :
-                  metric.color === 'orange' ? 'bg-orange-100' : 'bg-gray-100'
-                }`}>
-                  <Icon className={`w-6 h-6 ${
-                    metric.color === 'green' ? 'text-green-600' :
-                    metric.color === 'blue' ? 'text-blue-600' :
-                    metric.color === 'purple' ? 'text-purple-600' :
-                    metric.color === 'orange' ? 'text-orange-600' : 'text-gray-600'
-                  }`} />
+        {productivityMetrics.length > 0 ? (
+          productivityMetrics.map((metric, index) => {
+            const Icon = metric.icon;
+            return (
+              <div key={index} className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+                <div className="flex items-center justify-between mb-4">
+                  <div className={`p-3 rounded-lg ${
+                    metric.color === 'green' ? 'bg-green-100' :
+                    metric.color === 'blue' ? 'bg-blue-100' :
+                    metric.color === 'purple' ? 'bg-purple-100' :
+                    metric.color === 'orange' ? 'bg-orange-100' : 'bg-gray-100'
+                  }`}>
+                    <Icon className={`w-6 h-6 ${
+                      metric.color === 'green' ? 'text-green-600' :
+                      metric.color === 'blue' ? 'text-blue-600' :
+                      metric.color === 'purple' ? 'text-purple-600' :
+                      metric.color === 'orange' ? 'text-orange-600' : 'text-gray-600'
+                    }`} />
+                  </div>
+                  <span className="text-sm font-medium text-green-600">
+                    {metric.change}
+                  </span>
                 </div>
-                <span className="text-sm font-medium text-green-600">
-                  {metric.change}
-                </span>
+                <h3 className="text-2xl font-bold text-gray-900 mb-1">{metric.value}</h3>
+                <p className="text-gray-600 text-sm">{metric.title}</p>
               </div>
-              <h3 className="text-2xl font-bold text-gray-900 mb-1">{metric.value}</h3>
-              <p className="text-gray-600 text-sm">{metric.title}</p>
-            </div>
-          );
-        })}
+            );
+          })
+        ) : (
+          <div className="col-span-full text-center py-8">
+            <p className="text-gray-500">No productivity metrics available yet.</p>
+          </div>
+        )}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">

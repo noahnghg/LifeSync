@@ -1,0 +1,62 @@
+version: '3.8'
+
+services:
+  # MongoDB Database
+  mongodb:
+    image: mongo:7.0
+    container_name: lifesync-mongodb
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: password123
+      MONGO_INITDB_DATABASE: lifesync
+    volumes:
+      - mongodb_data:/data/db
+      - ./mongo-init:/docker-entrypoint-initdb.d
+    networks:
+      - lifesync-network
+
+  # Backend API
+  backend:
+    build:
+      context: ./mindful-living-backend
+      dockerfile: Dockerfile
+    container_name: lifesync-backend
+    restart: unless-stopped
+    ports:
+      - "5001:5001"
+    environment:
+      - FLASK_ENV=production
+      - MONGODB_URI=mongodb://admin:password123@mongodb:27017/lifesync?authSource=admin
+    depends_on:
+      - mongodb
+    networks:
+      - lifesync-network
+    volumes:
+      - ./mindful-living-backend:/app
+    command: python app.py
+
+  # Frontend
+  frontend:
+    build:
+      context: ./mindful-living-central
+      dockerfile: Dockerfile
+    container_name: lifesync-frontend
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    depends_on:
+      - backend
+    networks:
+      - lifesync-network
+    environment:
+      - VITE_API_URL=http://localhost:5001
+
+volumes:
+  mongodb_data:
+
+networks:
+  lifesync-network:
+    driver: bridge

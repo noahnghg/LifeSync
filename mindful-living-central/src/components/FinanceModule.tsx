@@ -1,64 +1,180 @@
+import React, { useState, useEffect } from 'react';
+import { TrendingUp, TrendingDown, DollarSign, CreditCard, PiggyBank, Target, Plus, X } from 'lucide-react';
+import { getFinances, getTransactions, createExpense } from '../lib/api';
 
-import React from 'react';
-import { TrendingUp, TrendingDown, DollarSign, CreditCard, PiggyBank, Target } from 'lucide-react';
+interface FinancialStat {
+  title: string;
+  value: string;
+  change: string;
+  trend: 'up' | 'down';
+  icon: React.ElementType;
+  color: string;
+}
+
+interface Transaction {
+  _id: string;
+  description: string;
+  amount: number;
+  date: string;
+  category: string;
+}
+
+interface BudgetCategory {
+  name: string;
+  budget: number;
+  spent: number;
+  color: string;
+}
 
 const FinanceModule = () => {
-  const financialStats = [
-    {
-      title: 'Total Balance',
-      value: '$12,450.00',
-      change: '+5.2%',
-      trend: 'up',
-      icon: DollarSign,
-      color: 'green'
-    },
-    {
-      title: 'Monthly Expenses',
-      value: '$3,240.00',
-      change: '-12.3%',
-      trend: 'down',
-      icon: CreditCard,
-      color: 'red'
-    },
-    {
-      title: 'Savings Goal',
-      value: '$8,500.00',
-      change: '+8.7%',
-      trend: 'up',
-      icon: PiggyBank,
-      color: 'blue'
-    },
-    {
-      title: 'Investment Return',
-      value: '$1,420.00',
-      change: '+15.8%',
-      trend: 'up',
-      icon: TrendingUp,
-      color: 'purple'
+  const [financialStats, setFinancialStats] = useState<FinancialStat[]>([]);
+  const [recentTransactions, setRecentTransactions] = useState<Transaction[]>([]);
+  const [budgetCategories, setBudgetCategories] = useState<BudgetCategory[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [showExpenseModal, setShowExpenseModal] = useState(false);
+  const [newExpense, setNewExpense] = useState({
+    description: '',
+    amount: '',
+    category: 'Food',
+    date: new Date().toISOString().split('T')[0]
+  });
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const [financesData, transactionsData] = await Promise.all([
+          getFinances(),
+          getTransactions(),
+        ]);
+
+        // Create financial stats from real data
+        if (financesData && financesData.length > 0) {
+          const financeData = financesData[0];
+          
+          // Create stats from the real data
+          const stats = [
+            {
+              title: 'Total Income',
+              value: `$${financeData.income?.toLocaleString() || '0'}`,
+              change: '+8%',
+              trend: 'up' as const,
+              icon: DollarSign,
+              color: 'green'
+            },
+            {
+              title: 'Total Expenses',
+              value: `$${financeData.totalExpenses?.toLocaleString() || '0'}`,
+              change: '-3%',
+              trend: 'down' as const,
+              icon: CreditCard,
+              color: 'red'
+            },
+            {
+              title: 'Savings',
+              value: `$${financeData.savings?.toLocaleString() || '0'}`,
+              change: '+12%',
+              trend: 'up' as const,
+              icon: PiggyBank,
+              color: 'blue'
+            },
+            {
+              title: 'Savings Goal',
+              value: `$${financeData.savingsGoal?.toLocaleString() || '0'}`,
+              change: `${Math.round((financeData.savings / financeData.savingsGoal) * 100) || 0}%`,
+              trend: 'up' as const,
+              icon: Target,
+              color: 'purple'
+            }
+          ];
+          setFinancialStats(stats);
+
+          // Create budget categories from real data
+          if (financeData.budgets) {
+            const categories = financeData.budgets.map((budget: any) => ({
+              name: budget.category,
+              budget: budget.budget,
+              spent: budget.spent,
+              color: getBudgetColor(budget.category)
+            }));
+            setBudgetCategories(categories);
+          }
+        }
+
+        setRecentTransactions(transactionsData || []);
+
+      } catch (err) {
+        setError('Failed to load financial data');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, []);
+
+  const getBudgetColor = (category: string) => {
+    const colors: { [key: string]: string } = {
+      'Housing': 'bg-blue-500',
+      'Food': 'bg-green-500',
+      'Transportation': 'bg-yellow-500',
+      'Entertainment': 'bg-purple-500',
+      'Utilities': 'bg-red-500'
+    };
+    return colors[category] || 'bg-gray-500';
+  };
+
+  const handleCreateExpense = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      const expenseData = {
+        description: newExpense.description,
+        amount: -Math.abs(parseFloat(newExpense.amount)), // Expenses are negative
+        category: newExpense.category,
+        date: new Date(newExpense.date).toISOString()
+      };
+      
+      await createExpense(expenseData);
+      
+      // Refresh data
+      const [financesData, transactionsData] = await Promise.all([
+        getFinances(),
+        getTransactions(),
+      ]);
+      setRecentTransactions(transactionsData || []);
+      
+      // Reset form and close modal
+      setNewExpense({
+        description: '',
+        amount: '',
+        category: 'Food',
+        date: new Date().toISOString().split('T')[0]
+      });
+      setShowExpenseModal(false);
+    } catch (err) {
+      setError('Failed to create expense');
     }
-  ];
+  };
 
-  const recentTransactions = [
-    { id: 1, description: 'Grocery Shopping', amount: -85.50, date: '2024-01-15', category: 'Food' },
-    { id: 2, description: 'Salary Deposit', amount: 3500.00, date: '2024-01-15', category: 'Income' },
-    { id: 3, description: 'Netflix Subscription', amount: -15.99, date: '2024-01-14', category: 'Entertainment' },
-    { id: 4, description: 'Gas Station', amount: -45.20, date: '2024-01-13', category: 'Transportation' },
-    { id: 5, description: 'Investment Dividend', amount: 125.00, date: '2024-01-12', category: 'Investment' }
-  ];
-
-  const budgetCategories = [
-    { name: 'Housing', budget: 1200, spent: 1200, color: 'bg-blue-500' },
-    { name: 'Food', budget: 600, spent: 420, color: 'bg-green-500' },
-    { name: 'Transportation', budget: 300, spent: 180, color: 'bg-yellow-500' },
-    { name: 'Entertainment', budget: 200, spent: 150, color: 'bg-purple-500' },
-    { name: 'Utilities', budget: 150, spent: 135, color: 'bg-red-500' }
-  ];
+  if (loading) return <div className="p-8">Loading financial data...</div>;
+  if (error) return <div className="p-8 text-red-600">{error}</div>;
 
   return (
     <div className="p-8 bg-gray-50 min-h-screen">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">Finance</h1>
-        <p className="text-gray-600">Track your financial health and manage your budget</p>
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900 mb-2">Finance</h1>
+            <p className="text-gray-600">Track your financial health and manage your budget</p>
+          </div>
+          <button
+            onClick={() => setShowExpenseModal(true)}
+            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center space-x-2 transition-colors"
+          >
+            <Plus className="w-5 h-5" />
+            <span>Add Expense</span>
+          </button>
+        </div>
       </div>
 
       {/* Financial Stats */}
@@ -112,7 +228,7 @@ const FinanceModule = () => {
           </div>
           <div className="space-y-4">
             {recentTransactions.map((transaction) => (
-              <div key={transaction.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+              <div key={transaction._id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                 <div className="flex-1">
                   <h3 className="font-medium text-gray-900">{transaction.description}</h3>
                   <p className="text-sm text-gray-600">{transaction.date} • {transaction.category}</p>
@@ -219,6 +335,104 @@ const FinanceModule = () => {
           </div>
         </div>
       </div>
+
+      {/* Add Expense Modal */}
+      {showExpenseModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl p-6 w-full max-w-md mx-4">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-bold text-gray-900">Add Expense</h2>
+              <button
+                onClick={() => setShowExpenseModal(false)}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <X className="w-6 h-6" />
+              </button>
+            </div>
+            
+            <form onSubmit={handleCreateExpense} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Description *
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={newExpense.description}
+                  onChange={(e) => setNewExpense({...newExpense, description: e.target.value})}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="What did you spend on?"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Amount *
+                </label>
+                <input
+                  type="number"
+                  step="0.01"
+                  required
+                  value={newExpense.amount}
+                  onChange={(e) => setNewExpense({...newExpense, amount: e.target.value})}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="0.00"
+                />
+              </div>
+              
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Category
+                  </label>
+                  <select
+                    value={newExpense.category}
+                    onChange={(e) => setNewExpense({...newExpense, category: e.target.value})}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value="Food">Food</option>
+                    <option value="Housing">Housing</option>
+                    <option value="Transportation">Transportation</option>
+                    <option value="Entertainment">Entertainment</option>
+                    <option value="Utilities">Utilities</option>
+                    <option value="Healthcare">Healthcare</option>
+                    <option value="Shopping">Shopping</option>
+                    <option value="Other">Other</option>
+                  </select>
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Date
+                  </label>
+                  <input
+                    type="date"
+                    value={newExpense.date}
+                    onChange={(e) => setNewExpense({...newExpense, date: e.target.value})}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+              </div>
+              
+              <div className="flex space-x-3 pt-4">
+                <button
+                  type="button"
+                  onClick={() => setShowExpenseModal(false)}
+                  className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                >
+                  Add Expense
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

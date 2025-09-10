@@ -1,3 +1,6 @@
 Flask
 pymongo
 flask-cors
+flask-jwt-extended
+werkzeug
+bcrypt

@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { CustomLifeBlock, ContentType, LifeBlockContent } from '@/types/lifeblocks';
 import * as api from '@/lib/api';

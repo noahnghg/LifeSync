@@ -1,7 +1,8 @@
 
 import React from 'react';
-import { Calendar, CheckSquare, DollarSign, BarChart3, Home, Settings, User, MessageSquare, Blocks } from 'lucide-react';
+import { Calendar, CheckSquare, DollarSign, BarChart3, Home, Settings, User, MessageSquare, Blocks, LogOut } from 'lucide-react';
 import { CustomLifeBlock } from '@/types/lifeblocks';
+import { useAuth } from '../contexts/AuthContext';
 
 interface SidebarProps {
   activeModule: string;
@@ -10,6 +11,8 @@ interface SidebarProps {
 }
 
 const Sidebar = ({ activeModule, setActiveModule, customLifeBlocks = [] }: SidebarProps) => {
+  const { user, logout } = useAuth();
+  
   const menuItems = [
     { id: 'dashboard', label: 'Dashboard', icon: Home },
     { id: 'tasks', label: 'Tasks', icon: CheckSquare },
@@ -24,6 +27,11 @@ const Sidebar = ({ activeModule, setActiveModule, customLifeBlocks = [] }: Sideb
     { id: 'profile', label: 'Profile', icon: User },
     { id: 'settings', label: 'Settings', icon: Settings },
   ];
+
+  const handleLogout = () => {
+    logout();
+    window.location.href = '/';
+  };
 
   return (
     <div className="bg-white border-r border-gray-200 w-64 min-h-screen flex flex-col">
@@ -100,7 +108,13 @@ const Sidebar = ({ activeModule, setActiveModule, customLifeBlocks = [] }: Sideb
             return (
               <button
                 key={item.id}
-                onClick={() => setActiveModule(item.id)}
+                onClick={() => {
+                  if (item.id === 'profile') {
+                    window.location.href = '/profile';
+                  } else {
+                    setActiveModule(item.id);
+                  }
+                }}
                 className="w-full flex items-center px-4 py-3 rounded-lg text-left transition-colors text-gray-600 hover:bg-gray-50 hover:text-gray-900"
               >
                 <Icon className="w-5 h-5 mr-3 text-gray-400" />
